@@ -35,6 +35,44 @@ view(governors)
   justice- predictive or causal model
   - there's no causation without manipulation -> predictive model, we can't manipulate or randomly assign age or gender
   
-  $lived\_after_{i} = \beta_0 + \beta_1 age + \beta_2 gender +\epsilon_{i}$
+  $lived\_after_{i} = \beta_0 + \beta_1 election\_age_{i} + \beta_2 sex_{i} +\epsilon_{i}$
+  
+  we have to choose a specific sex for the equation
+  $lived\_after_{i} = \beta_0 + \beta_2 male_{i} + \beta_1 election\_age_{i}  +\epsilon_{i}$ 
+  
+  **data generating mechanism- assumptions that we are making
+
+```{r fitting the model}
+
+fit_1 <-        stan_glm(formula = lived_after ~ sex + election_age,
+                     data = governors,
+                     refresh =0,
+                     seed = 12)
+
+print(fit_1)
+```
+   intercept = unknown female base age 60-72
+   sexmale = 6.1 years higher 
+  election_age = when comparing two candidates who differ by one year in election age then the older one will live .8 years less. slope = -.8
   
   
+  
+```{r fit interactive model}
+fit_2 <-        stan_glm(formula = lived_after ~ sex + election_age + sex*election_age,
+                     data = governors,
+                     refresh = 0,
+                     seed = 12)
+```
+$lived\_after_{i} = \beta_0 + \beta_1 election\_age_{i} + \beta_2 male_{i} +  \beta_3 male_{i}*election\_age_{i} + \epsilon_{i}$ 
+
+```{r fit interactive model}
+print(fit_2)
+```
+  
+  intercept: lived after
+  sexMale: 
+  election_age: -0.5 to .7 - includes 0, so probably not helpful 
+  the difference in longevity between two female candidates is .1 years
+  sexMale:election_age - 
+  
+  easier for female candidates
