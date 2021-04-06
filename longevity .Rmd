@@ -1,0 +1,40 @@
+---
+title: "classwork"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(primer.data)
+library(tidyverse) 
+library(rstanarm)
+library(skimr)
+```
+
+
+```{r}
+glimpse(governors)
+view(governors)
+```
+
+  #  What is the influence of age and gender on the expected longevity of political candidates?
+  
+  Wisdom:
+  
+  - Based in US -> governors, but we want to understand all types of political candidates
+  - years of election from 1945-2011, if we are making predictions about the future and this data set is limited to nearly 10 years ago
+  - people are living longer
+  - not as many data points for women (increase of women's participation in recent decades)
+  - includes election age, death age, and lived after
+  
+  population- question doesn't specify, but we want the population to be American governors
+  validity
+  representativeness- past governors (about the rows)
+  
+  justice- predictive or causal model
+  - there's no causation without manipulation -> predictive model, we can't manipulate or randomly assign age or gender
+  
+  $lived\_after_{i} = \beta_0 + \beta_1 age + \beta_2 gender +\epsilon_{i}$
+  
+  
