@@ -10,6 +10,7 @@ library(primer.data)
 library(tidyverse) 
 library(rstanarm)
 library(skimr)
+library(ggdist)
 ```
 
 
@@ -32,7 +33,7 @@ view(governors)
   validity
   representativeness- past governors (about the rows)
   
-  justice- predictive or causal model
+  ##justice- predictive or causal model
   - there's no causation without manipulation -> predictive model, we can't manipulate or randomly assign age or gender
   
   $lived\_after_{i} = \beta_0 + \beta_1 election\_age_{i} + \beta_2 sex_{i} +\epsilon_{i}$
@@ -42,7 +43,7 @@ view(governors)
   
   **data generating mechanism- assumptions that we are making
 
-```{r fitting the model}
+```{r fitting_the_model}
 
 fit_1 <-        stan_glm(formula = lived_after ~ sex + election_age,
                      data = governors,
@@ -57,7 +58,7 @@ print(fit_1)
   
   
   
-```{r fit interactive model}
+```{r fit interactive model 2}
 fit_2 <-        stan_glm(formula = lived_after ~ sex + election_age + sex*election_age,
                      data = governors,
                      refresh = 0,
@@ -69,10 +70,66 @@ $lived\_after_{i} = \beta_0 + \beta_1 election\_age_{i} + \beta_2 male_{i} +  \b
 print(fit_2)
 ```
   
-  intercept: lived after
-  sexMale: 
-  election_age: -0.5 to .7 - includes 0, so probably not helpful 
-  the difference in longevity between two female candidates is .1 years
-  sexMale:election_age - 
+  intercept: average lived_after for females
   
-  easier for female candidates
+  sexMale: when added to the intercept, it provides the average number of years lived for males candidates on the day of election for people who are aged 0 (not actually useful)
+  
+  election_age: -0.5 to .7 - includes 0, so probably not helpful 
+  the difference in longevity between two female candidates is .1 years (female slope is -.1)
+  
+  sexMale:election_age - (added to election age / Beta2 + Beta3)
+  -.9 = slope, if we have two men the older one will live for .9 years less
+  
+  for women the relationship between lived posted election and age at time of election is flat (everyone lives about the same amount of time)
+  
+  For men the relationship is stronger, the older you are the fewer years you live post_election
+ 
+ 
+```{r}
+
+#Using fit_2, let’s calculate the expected lived_after for male and female
+#candidates with election_age’s equal to 30, 45 and 60.
+
+newobs <- tibble( sex = rep(c("Male", "Female"), 3), election_age = rep(c(30, 45, 60), 2),
+                  names = paste(sex, election_age, sep = "_"))
+
+ pe <- posterior_epred(object = fit_2, 
+                      newdata = newobs) %>% 
+                      as_tibble() %>% 
+   
+   #use set names to take heading names from newobs
+                      set_names( newobs$names) %>% 
+   pivot_longer(names_to = "group",
+                           values_to = "years_lived",
+                           cols = c("Male_30": "Female_60")) %>% 
+   separate(group, into = c("sex", "group"), "_")
+ 
+ 
+#pivot_longer(cols = Male_30 : Female_60,
+            #   names_to = c("age", "sex"),
+             #  values_to = "lived_after",
+#names_sep = "_")
+
+#There is an unknown ture reality out there regarding the average amount of years men would live on averge after election. Here we have a posterior distribution for the average amount of year's lived after election for the age and sex specified. Each column includes 4,000 draws of possible average years that a person could have lived based on our model. 
+```
+ 
+```{r}
+pe %>% 
+  
+    
+                ggplot(aes(x = years_lived, y = group)) +
+                stat_slab(aes(fill = sex)) +
+                labs(title = "Candidate Longevity Versus Gender and Age at Election",
+ #I had to fix this line so that the second part was in line with the first line
+ #of the subtitle
+                     subtitle = "Age at election does not impact the longevity of female candidates",
+                     caption = "Source: governors data set",
+                     x = "Expected Years to Live After the Election",
+                     y = "Age at Election") +
+                scale_x_continuous(labels = scales::number_format(accuracy = 1)) +
+                coord_cartesian(xlim = c(-10, 60))
+                                
+  
+```
+ 
+ Age at election impacts men and not women. Because of the spread of the female posteriors we can be less certain about any conclusions regarding the expected years to live after election. Since there were more men in the data set, the posteriors for males are more conclusive and condensed than those of women
